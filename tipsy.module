@@ -1,0 +1,99 @@
+<?php // $Id: tipsy.module,v 1.6 2010/11/14 12:37:25 doublethink Exp $
+
+/*
+ * Implementation of hook_init()
+ */
+function tipsy_init() {
+	$settings = _tipsy_get_settings();
+	drupal_add_js(drupal_get_path('module', 'tipsy') . '/javascripts/jquery.tipsy.js');
+	drupal_add_js(drupal_get_path('module', 'tipsy') . '/javascripts/tipsy.js');
+	drupal_add_css(drupal_get_path('module', 'tipsy') . '/stylesheets/tipsy.css');
+	if ($_GET['q'] == 'admin/settings/tipsy') {
+		drupal_add_js(drupal_get_path('module', 'tipsy') . '/javascripts/tipsy.admin.js');
+    drupal_add_css(drupal_get_path('module', 'tipsy') . '/stylesheets/tipsy.admin.css');
+	}
+  if ($settings['drupal_forms']['forms'] == 0) {
+    unset($settings['drupal_forms']);
+  }
+  drupal_add_js(array('tipsy' => $settings), 'setting');
+}
+
+/*
+ * Implementation of hook_menu()
+ */
+function tipsy_menu() {
+	$items['admin/settings/tipsy'] = array(
+		'title' => t("Tipsy settings"),
+	  'description' => t('Integrates tipsy tooltips with Drupal'),
+		'page callback' => 'drupal_get_form',
+	  'access callback' => 'user_access',
+		'access arguments' => array('administer tipsy'),
+	  'page arguments' => array('tipsy_admin'),
+	  'file' => 'tipsy.admin.inc'
+	);
+	$items['admin/settings/tipsy/ahah'] = array(
+    'title' => t('Tipsy admin AHAH callback'),
+    'description' => t('Tipsy admin AHAH callback.'),
+    'page callback' => '_tipsy_custom_selectors_ahah',
+    'access arguments' => array('administer tipsy'),
+    'file' => 'tipsy.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+	return $items;
+}
+
+/*
+ * Implementation of hook_perm().
+ */
+function tipsy_perm() {
+  return array('administer tipsy');
+}
+
+/*
+ * Implementation of hook_theme().
+ */
+function tipsy_theme() {
+  return array(
+    'tipsy_custom_selectors_form' => array(
+      'arguments' => array('form' => NULL),
+      'file' => 'tipsy.admin.inc',
+    ),
+  );
+}
+
+/*
+ * Helper function to retreive all settings for tipsy
+ */
+function _tipsy_get_settings($new_rule = false) {
+  if ($new_rule == true) {
+  	$settings = array(
+	    'selector' => '',
+	    'options' => array(
+	      'fade' => 1, 'gravity' => 'w', 'delayIn' => 0, 'delayOut' => 0,
+	      'trigger' => 'hover', 'opacity' => '0.8', 'offset' => 0, 'html' => 0, 'title' => 'title'
+	    )
+	  );
+  }
+  else {
+  	$wide_settings = array(
+  	  'drupal_forms' => array(
+	      'forms' => true,
+	      'options' => array(
+	        'fade' => 1, 'gravity' => 'autoWE', 'delayIn' => 0, 'delayOut' => 0,
+	        'trigger' => 'focus', 'opacity' => '0.8', 'offset' => 0
+	      )
+	    ),
+	    'custom_selectors' => array(
+	      0 => array(
+		      'selector' => '.tipsy',
+		      'options' => array(
+		        'fade' => 1, 'gravity' => 'w', 'delayIn' => 0, 'delayOut' => 0,
+		        'trigger' => 'hover', 'opacity' => '0.8', 'offset' => 0, 'html' => 0, 'title' => 'title'
+		      )
+		    )
+	    )
+  	);
+  	$settings = variable_get('tipsy', $wide_settings);
+  }
+  return $settings;
+}
